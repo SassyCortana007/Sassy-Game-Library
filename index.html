@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: file: data:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Game Library</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep: #171a21;
+      --bg-panel: #1b2838;
+      --text: #c6d4df;
+      --text-dim: #8f98a0;
+      --accent: #4d9ddb;
+      --accent-hover: #66b3ff;
+      --border: #2a475e;
+      --danger: #c15755;
+      --danger-hover: #e06c6a;
+      --green: #a4d007;
+      --green-dark: #4c6b22;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Segoe UI Semibold', sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.4;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #1b2838;
+      border-radius: 0;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #4d9ddb;
+      border-radius: 3px;
+      min-height: 24px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #66c0f4;
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: #1b2838;
+    }
+
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px 48px;
+    }
+
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      margin: 0 -24px 0;
+      padding: 20px 24px;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .game-count {
+      font-size: 0.875rem;
+      color: var(--text-dim);
+    }
+
+    .game-count strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .search-wrap {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-size: 0.9375rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-wrap input:focus { border-color: var(--accent); }
+    .search-wrap input::placeholder { color: var(--text-dim); }
+
+    .search-results {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 320px;
+      overflow-y: auto;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      z-index: 100;
+    }
+
+    .search-results.visible { display: block; }
+
+    .search-result {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+
+    .search-result:last-child { border-bottom: none; }
+    .search-result:hover { background: var(--bg-panel); }
+
+    .search-result img {
+      width: 120px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .search-result span { font-size: 0.875rem; flex: 1; }
+
+    .search-empty {
+      padding: 16px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      background: transparent;
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      color: var(--accent);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      color: var(--bg-deep);
+    }
+
+    /* Filter / sort bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      padding: 16px 0;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-group label {
+      font-size: 12px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+
+    .filter-select {
+      padding: 8px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 400;
+      outline: none;
+      cursor: pointer;
+      min-width: 160px;
+    }
+
+    .filter-select:focus { border-color: var(--accent); }
+
+    .suggested-tag-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .suggested-tag-bar.visible {
+      display: flex;
+    }
+
+    .suggested-tag-bar label {
+      font-size: 12px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .tag-filter-group {
+      flex: 1;
+      min-width: 0;
+      align-items: center;
+    }
+
+    .tag-filter-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tag-pills {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tag-pill {
+      padding: 6px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-weight: 400;
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .tag-pill:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .tag-pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(77, 157, 219, 0.1);
+    }
+
+    .tag-pill-more {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #c6d4df;
+    }
+
+    .tag-pill-more:hover {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(77, 157, 219, 0.08);
+    }
+
+    .tag-overflow-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 150;
+      background: #1b2838;
+      border: 1px solid #4d9ddb;
+      border-radius: 6px;
+      padding: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    }
+
+    .tag-overflow-panel.visible {
+      display: block;
+    }
+
+    .tag-overflow-panel .tag-pills {
+      flex-wrap: wrap;
+    }
+
+    .suggestions-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      border: 1px dashed var(--border);
+      border-radius: 3px;
+    }
+
+    .suggestions-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(77, 157, 219, 0.2);
+      border-top-color: #4d9ddb;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* Sections */
+    .library-section {
+      margin-top: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .section-heading {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text);
+    }
+
+    #section-suggested .section-header {
+      z-index: 1;
+    }
+
+    #section-suggested .suggested-tag-bar {
+      z-index: 1;
+    }
+
+    #section-suggested #suggested-container {
+      z-index: 1;
+    }
+
+    #suggestion-source-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    #suggestion-source-bar.hidden {
+      display: none;
+    }
+
+    #based-on-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #8f98a0;
+      font-size: 11px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    #based-on-btn:hover {
+      border-color: #4d9ddb;
+      color: #c6d4df;
+    }
+
+    #based-on-clear {
+      background: transparent;
+      border: 1px solid #2a475e;
+      color: #8f98a0;
+      font-size: 11px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none;
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    #based-on-clear:hover {
+      color: #c6d4df;
+      border-color: #4d9ddb;
+    }
+
+    #game-select-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #game-select-modal {
+      background: #1b2838;
+      border: 1px solid #2a475e;
+      border-radius: 6px;
+      width: 520px;
+      max-height: 620px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+
+    #game-select-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #2a475e;
+      flex-shrink: 0;
+    }
+
+    #game-select-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+    }
+
+    #game-select-close {
+      background: transparent;
+      border: none;
+      color: #8f98a0;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      padding: 0;
+      line-height: 1;
+    }
+
+    #game-select-close:hover {
+      background: #2a475e;
+      color: #ffffff;
+    }
+
+    #game-select-close svg {
+      display: block;
+      flex-shrink: 0;
+    }
+
+    #game-select-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 16px;
+    }
+
+    #game-select-footer {
+      padding: 12px 18px;
+      border-top: 1px solid #2a475e;
+      display: flex;
+      justify-content: flex-end;
+      flex-shrink: 0;
+    }
+
+    #game-select-find {
+      background: #4d9ddb;
+      border: none;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      padding: 7px 20px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    #game-select-find:hover {
+      background: #66c0f4;
+    }
+
+    .game-select-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      color: #c6d4df;
+      font-size: 13px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+    }
+
+    .game-select-row:hover {
+      background: #2a475e;
+    }
+
+    .game-select-row input[type="checkbox"] {
+      accent-color: #4d9ddb;
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .game-select-row img {
+      width: 80px;
+      height: 30px;
+      object-fit: cover;
+      background: #16202d;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .game-select-row span {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-refresh {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .btn-refresh:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn-refresh svg { width: 14px; height: 14px; }
+
+    .btn-refresh.spinning svg {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .refresh-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: #1b2838;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .refresh-overlay__label {
+      color: #c6d4df;
+      font-size: 14px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+    }
+
+    .app-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 10000;
+      padding: 12px 16px;
+      background: #1b2838;
+      border: 1px solid #2a475e;
+      border-radius: 4px;
+      color: #c6d4df;
+      font-size: 13px;
+      font-family: 'Segoe UI', 'Segoe UI Semibold', sans-serif;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+
+    .app-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 180px);
+      gap: 16px;
+      justify-content: start;
+    }
+
+    .game-card {
+      position: relative;
+      width: 180px;
+      height: 240px;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .card-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      z-index: 1;
+    }
+
+    .card-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 62px;
+      background: rgba(14, 26, 38, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      padding: 0 8px 0 12px;
+      gap: 8px;
+      transform: translateY(100%);
+      transition: transform 0.2s ease;
+      pointer-events: none;
+    }
+
+    .card-title {
+      flex: 1;
+      min-width: 0;
+      padding-right: 6px;
+      white-space: normal;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .card-action {
+      flex-shrink: 0;
+      align-self: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .card-delete {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      z-index: 4;
+      background: rgba(0,0,0,0.7);
+      border: none;
+      border-radius: 3px;
+      color: #fff;
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-card:hover .card-bar {
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .game-card:hover .card-delete {
+      opacity: 1;
+    }
+
+    .game-card:hover {
+      transform: scale(1.03);
+      transition: transform 0.15s ease;
+      outline: 1px solid #4d9ddb;
+    }
+
+    .game-card:hover .card-action {
+      filter: brightness(1.15);
+    }
+
+    .card-action svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+    }
+
+    .card-action--complete {
+      background: #4c6b22;
+    }
+
+    .card-action--undo {
+      background: #1b4d7a;
+    }
+
+    .card-action--add {
+      background: #1b2838;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #c6d4df;
+      font-size: 1.25rem;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      padding: 2px 8px;
+      font-size: 0.625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-dim);
+      border-radius: 3px;
+      z-index: 4;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+
+    .game-card:hover .card-badge {
+      opacity: 1;
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border: 1px dashed var(--border);
+      border-radius: 3px;
+    }
+
+    .suggested-placeholder {
+      padding: 40px 24px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.875rem;
+      border: 1px dashed var(--border);
+      border-radius: 3px;
+    }
+
+    .suggestions-empty {
+      padding: 40px 24px;
+      text-align: center;
+      color: #8f98a0;
+      font-size: 0.875rem;
+      border: 1px dashed var(--border);
+      border-radius: 3px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(23, 26, 33, 0.85);
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 24px;
+    }
+
+    .modal-overlay.visible { display: flex; }
+
+    .modal {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 24px;
+    }
+
+    .modal h3 { font-size: 1.125rem; margin-bottom: 20px; }
+
+    .form-group { margin-bottom: 16px; }
+
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+    }
+
+    .form-group input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-size: 0.9375rem;
+      outline: none;
+    }
+
+    .form-group input[type="text"]:focus { border-color: var(--accent); }
+
+    .cover-picker { display: flex; align-items: center; gap: 12px; }
+
+    .cover-preview {
+      width: 120px;
+      height: 56px;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+    }
+
+    .cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    .btn-secondary {
+      border-color: var(--border);
+      color: var(--text-dim);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg-deep);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #custom-menubar {
+      display: flex;
+      align-items: center;
+      background: #171a21;
+      height: 28px;
+      padding: 0 4px;
+      border-bottom: 1px solid #000;
+      position: relative;
+      z-index: 1000;
+      flex-shrink: 0;
+      -webkit-app-region: no-drag;
+    }
+
+    .menu-item {
+      position: relative;
+      color: #c6d4df;
+      font-size: 12px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      padding: 0 10px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 3px;
+    }
+
+    .menu-item:hover,
+    .menu-item.active {
+      background: #2a3f5f;
+      color: #ffffff;
+    }
+
+    .menu-dropdown {
+      display: none;
+      position: absolute;
+      top: 28px;
+      left: 0;
+      min-width: 160px;
+      background: #1b2838;
+      border: 1px solid #2a475e;
+      border-radius: 3px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 9999;
+      padding: 4px 0;
+    }
+
+    .menu-item.active .menu-dropdown {
+      display: block;
+    }
+
+    .menu-option {
+      color: #c6d4df;
+      font-size: 12px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      padding: 6px 16px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .menu-option:hover {
+      background: #2a475e;
+      color: #ffffff;
+    }
+
+    .menu-option--disabled {
+      color: #4d6275;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: #2a475e;
+      margin: 4px 0;
+    }
+
+    #merge-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #merge-modal {
+      background: #1b2838;
+      border: 1px solid #2a475e;
+      border-radius: 6px;
+      padding: 24px 28px;
+      width: 380px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #merge-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      margin-bottom: 4px;
+    }
+
+    #merge-message {
+      font-size: 13px;
+      font-weight: 600;
+      color: #c6d4df;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+    }
+
+    #merge-detail {
+      font-size: 12px;
+      color: #8f98a0;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    #merge-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    #merge-btn-cancel {
+      background: transparent;
+      border: none;
+      color: #8f98a0;
+      font-size: 12px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      padding: 7px 14px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    #merge-btn-cancel:hover {
+      color: #c6d4df;
+      background: rgba(255,255,255,0.05);
+    }
+
+    #merge-btn-replace {
+      background: #2a475e;
+      border: 1px solid #4d9ddb;
+      color: #c6d4df;
+      font-size: 12px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      padding: 7px 14px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    #merge-btn-replace:hover {
+      background: #3a5f7a;
+      color: #ffffff;
+    }
+
+    #merge-btn-merge {
+      background: #4d9ddb;
+      border: 1px solid #66c0f4;
+      color: #ffffff;
+      font-size: 12px;
+      font-family: 'Motiva Sans', 'Segoe UI', sans-serif;
+      font-weight: 600;
+      padding: 7px 14px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    #merge-btn-merge:hover {
+      background: #66c0f4;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div id="custom-menubar">
+    <div class="menu-item" id="menu-file">
+      File
+      <div class="menu-dropdown" id="dropdown-file">
+        <div class="menu-option" id="opt-refresh">Refresh</div>
+        <div class="menu-divider"></div>
+        <div class="menu-option" id="opt-export">Export Library</div>
+        <div class="menu-option" id="opt-load">Load Library</div>
+      </div>
+    </div>
+    <div class="menu-item" id="menu-about">
+      About
+      <div class="menu-dropdown" id="dropdown-about">
+        <div class="menu-option menu-option--disabled">Version 1.0.0</div>
+        <div class="menu-option" id="opt-github">By SassyCortana007</div>
+      </div>
+    </div>
+  </div>
+  <div class="app">
+    <header>
+      <div class="header-top">
+        <h1>Game Library</h1>
+        <p class="game-count"><strong id="game-count">0</strong> games</p>
+      </div>
+      <div class="toolbar">
+        <div class="search-wrap">
+          <input type="text" id="steam-search" placeholder="Search Steam store to add a game…" autocomplete="off">
+          <div class="search-results" id="search-results"></div>
+        </div>
+        <button type="button" class="btn" id="btn-add-custom">Add custom</button>
+      </div>
+    </header>
+
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label for="sort-select">Sort</label>
+        <select id="sort-select" class="filter-select">
+          <option value="date-desc">Date added (newest first)</option>
+          <option value="date-asc">Date added (oldest first)</option>
+          <option value="name-asc">Name (A–Z)</option>
+          <option value="name-desc">Name (Z–A)</option>
+        </select>
+      </div>
+    </div>
+
+    <section class="library-section" id="section-backlog">
+      <div class="section-header">
+        <h2 class="section-heading" id="heading-backlog">TO PLAY (0)</h2>
+      </div>
+      <div class="game-grid" id="grid-backlog"></div>
+    </section>
+
+    <section class="library-section" id="section-completed">
+      <div class="section-header">
+        <h2 class="section-heading" id="heading-completed">COMPLETED (0)</h2>
+      </div>
+      <div class="game-grid" id="grid-completed"></div>
+    </section>
+
+    <section class="library-section" id="section-suggested">
+      <div class="section-header">
+        <h2 class="section-heading">SUGGESTED FOR YOU</h2>
+        <button type="button" class="btn-refresh" id="btn-refresh-suggestions" title="Refresh suggestions" aria-label="Refresh suggestions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M23 4v6h-6M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+      </div>
+      <div id="suggestion-source-bar">
+        <button type="button" id="based-on-btn">Based on: Auto (3 recent) ▾</button>
+        <button type="button" id="based-on-clear" style="display:none;">Clear</button>
+      </div>
+      <div class="suggested-tag-bar" id="suggested-tag-bar">
+        <label>Filter by tag</label>
+        <div class="tag-filter-wrap" id="tag-filter-wrap">
+          <div class="tag-pills" id="tag-pills"></div>
+          <div class="tag-overflow-panel" id="tag-overflow-panel"></div>
+        </div>
+      </div>
+      <div id="suggested-container"></div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="custom-modal">
+    <div class="modal">
+      <h3>Add custom game</h3>
+      <form id="custom-form">
+        <div class="form-group">
+          <label for="custom-name">Game name</label>
+          <input type="text" id="custom-name" required placeholder="Enter game title">
+        </div>
+        <div class="form-group">
+          <label>Cover image</label>
+          <div class="cover-picker">
+            <div class="cover-preview" id="cover-preview">No image</div>
+            <button type="button" class="btn btn-secondary" id="btn-pick-cover">Choose file</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-custom">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-submit-custom" disabled>Add game</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="merge-overlay" style="display:none;">
+    <div id="merge-modal">
+      <div id="merge-title">Load Library</div>
+      <div id="merge-message">You already have games in your library.</div>
+      <div id="merge-detail">Would you like to merge the imported library with your existing one, or replace it entirely?</div>
+      <div id="merge-buttons">
+        <button id="merge-btn-cancel">Cancel</button>
+        <button id="merge-btn-replace">Replace</button>
+        <button id="merge-btn-merge">Merge</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="game-select-overlay" style="display:none;">
+    <div id="game-select-modal">
+      <div id="game-select-header">
+        <span id="game-select-title">Select games to base suggestions on</span>
+        <button type="button" id="game-select-close">
+          <svg width="10" height="10" viewBox="0 0 10 10"
+               fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="1" y1="1" x2="9" y2="9"
+                  stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round"/>
+            <line x1="9" y1="1" x2="1" y2="9"
+                  stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div id="game-select-list"></div>
+      <div id="game-select-footer">
+        <button type="button" id="game-select-find">Find</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
